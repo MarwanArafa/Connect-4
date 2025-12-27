@@ -41,7 +41,7 @@ You need a C++ compiler (like `g++`).
 
 2.  **Compile the code (Maximum Optimization):**
     ```bash
-    g++ -o connect4 connect4.cpp -O3
+    g++ -o connect4 main.cpp -O3
     ```
 
 3.  **Run the game:**
