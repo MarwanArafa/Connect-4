@@ -1,27 +1,33 @@
-# Connect 4 AI Engine (C++)
+# 🏛️ Connect 4: Advanced AI Edition (C++)
 
-A high-performance Connect 4 AI built from scratch in C++. This project demonstrates advanced game theory concepts, utilizing the **Minimax algorithm with Alpha-Beta Pruning** to simulate up to 9 moves into the future. It features a custom hybrid scoring engine that evaluates board states based on physics and strategy.
+> **Status:** Completed | **Type:** Game AI Engine | **Language:** C++
 
-## Key Features
+A high-performance Connect 4 AI engine built from scratch in C++. This project demonstrates advanced game theory concepts, utilizing the **Minimax algorithm with Alpha-Beta Pruning** to simulate up to 9 moves into the future. It features a custom hybrid scoring engine that evaluates board states based on physics-aware logic, gravity, and strategic pattern recognition.
 
-### Intelligence Engine
+---
+
+## ⚡ Key Features
+
+### 🧠 The Intelligence Engine
 Unlike basic bots that just look for lines, this engine understands the board deeply:
 * **Gravity Awareness:** It knows pieces must fall. It ignores "floating threats" that cannot physically be played, saving computation power.
 * **Strategic Gap Logic:** It values "split threats" (e.g., `X_X`) higher than simple connections (`XX`), recognizing that gaps are harder for opponents to block.
 * **Deadly Pattern Recognition:** Detects unstoppable traps (e.g., `_XXX_` with open ends) and assigns them massive priority.
 
-### Performance Optimization
+### 🚀 Performance Optimization
 * **Minimax Algorithm:** Simulates thousands of future board states to find the optimal path.
 * **Alpha-Beta Pruning:** Drastically reduces computation time by "pruning" (ignoring) move branches that are clearly worse than options already found.
-* **Transposition Table:** Uses a memory cache to store previously calculated board positions, preventing redundant processing.
+* **Transposition Table:** Uses a memory cache (`unordered_map`) to store previously calculated board positions, preventing redundant processing.
 * **Smart Move Ordering:** Evaluates the best columns (Center) first, maximizing the efficiency of the pruning algorithm.
 
-### Robust Architecture
+### 🛡️ Robust Architecture
 * **Adaptive Depth:** Adjusts thinking depth based on the game phase (Opening vs. Endgame).
-* **Safety Limits:** Features bounded memory usage to ensure stability on any hardware.
+* **Safety Limits:** Features bounded memory usage (~200MB cap) to ensure stability on any hardware.
 * **Crash Protection:** Custom input handling prevents crashes from invalid keystrokes.
 
-## How to Play
+---
+
+## 🎮 How to Play
 
 ### Prerequisites
 You need a C++ compiler (like `g++`).
@@ -33,7 +39,7 @@ You need a C++ compiler (like `g++`).
     cd connect4-ai
     ```
 
-2.  **Compile the code:**
+2.  **Compile the code (Maximum Optimization):**
     ```bash
     g++ -o connect4 connect4.cpp -O3
     ```
@@ -43,15 +49,19 @@ You need a C++ compiler (like `g++`).
     ./connect4
     ```
 
-## Difficulty Levels
+---
+
+## ⚙️ Difficulty Levels
 
 * **Easy (Depth 2):** Fast and casual. Good for beginners.
 * **Medium (Depth 4):** Starts to see traps. A decent challenge.
 * **Hard (Depth 6):** Strong positional play. Hard to beat.
-* **Grandmaster (Depth 7):** Plays nearly perfectly.
-* **Legend (Depth 9):** "God Mode." Calculates ~40 million positions.
+* **Grandmaster (Depth 7):** The standard competitive experience. Plays nearly perfectly.
+* **Legend (Depth 9):** "God Mode." Calculates ~40 million positions. (Warning: Can be slow on older CPUs).
 
-## Technical Highlights
+---
+
+## 📸 Technical Highlights
 
 ```cpp
 // Example: The Hybrid Scoring Logic
