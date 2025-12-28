@@ -1,10 +1,11 @@
 /*
-    CONNECT 4
-        [Core Features]
-        - Algorithm: Minimax with Alpha-Beta Pruning.
-        - Heuristics: Gravity-aware evaluation, strategic pattern recognition.
-        - Optimization: Transposition table (memory cache) & dynamic move ordering.
-        - Safety: Input validation and bounded memory usage.
+    CONNECT 4: PROFESSIONAL EDITION
+    [Core Features]
+    - Algorithm: Minimax with Alpha-Beta Pruning.
+    - Heuristics: Gravity-aware evaluation, strategic pattern recognition.
+    - Optimization: Transposition table (memory cache) & dynamic move ordering.
+    - Safety: Input validation and bounded memory usage.
+    - Compatibility: Works on Linux (Native) & Windows (Auto-Color Fix).
 */
 
 #include <iostream>
@@ -18,6 +19,14 @@
 #include <fstream> 
 #include <random>
 
+// --- WINDOWS COMPATIBILITY BLOCK ---
+#ifdef _WIN32
+    #include <windows.h>
+    #ifndef ENABLE_VIRTUAL_TERMINAL_PROCESSING
+    #define ENABLE_VIRTUAL_TERMINAL_PROCESSING 0x0004
+    #endif
+#endif
+
 using namespace std;
 
 // --- CONFIGURATION ---
@@ -30,11 +39,28 @@ const string RED = "\033[31m";
 const string BLUE = "\033[34m";
 const string RESET = "\033[0m";
 const string YELLOW = "\033[33m";
+const string CLEAR_SCREEN = "\033[2J\033[1;1H";
 
 char board[ROWS][COLS];
 
 // MEMORY CACHE
 unordered_map<string, pair<int, int>> memo;
+
+// --- SYSTEM SETUP ---
+
+void setupConsole() {
+    #ifdef _WIN32
+        // Enable UTF-8 for box characters
+        SetConsoleOutputCP(65001);
+        // Enable ANSI Colors
+        HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        DWORD dwMode = 0;
+        if (hOut != INVALID_HANDLE_VALUE && GetConsoleMode(hOut, &dwMode)) {
+            dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            SetConsoleMode(hOut, dwMode);
+        }
+    #endif
+}
 
 // --- VISUALS & SETUP ---
 
@@ -51,7 +77,7 @@ string getBoardHash(char b[ROWS][COLS]) {
 }
 
 void showRules() {
-    cout << "\033[2J\033[1;1H"; 
+    cout << CLEAR_SCREEN;
     cout << "\n " << YELLOW << "┌───────────────────────────────────────────────┐" << RESET << "\n";
     cout << " " << YELLOW << "│" << RESET << "             GAME RULES & MODES                " << YELLOW << "│" << RESET << "\n";
     cout << " " << YELLOW << "├───────────────────────────────────────────────┤" << RESET << "\n";
@@ -64,11 +90,12 @@ void showRules() {
     cout << " " << YELLOW << "│" << RESET << "    - ENDING: Game ends only when full.        " << YELLOW << "│" << RESET << "\n";
     cout << " " << YELLOW << "└───────────────────────────────────────────────┘" << RESET << "\n";
     cout << "\n  Press [ENTER] to continue...";
-    cin.ignore(); cin.get(); 
+    if (cin.peek() == '\n') cin.ignore();
+    cin.get(); 
 }
 
 void printBoard(int p1Score, int p2Score, string modeName) {
-    cout << "\033[2J\033[1;1H"; 
+    cout << CLEAR_SCREEN;
     cout << "\n=== " << modeName << " ===\n";
     cout << "  " << RED << "P1: " << p1Score << RESET;
     cout << "      " << BLUE << "P2 (AI): " << p2Score << RESET << "\n";
@@ -125,7 +152,6 @@ bool dropPiece(int col, char player) {
 
 // --- EVALUATION ENGINE ---
 
-// Checks if a specific cell obeys gravity (is playable)
 bool isValidPlacement(int r, int c, char b[ROWS][COLS]) {
     if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return false;
     if (r == ROWS - 1) return true; 
@@ -140,7 +166,7 @@ int evaluateWindow(char c1, char c2, char c3, char c4, char piece) {
 
     // A. OFFENSE
     if (countPiece == 4) return 1000000;
-    
+     
     if (countPiece == 3 && countEmpty == 1) {
         bool left_open = (c1 == ' ');
         bool right_open = (c4 == ' ');
@@ -167,7 +193,7 @@ int evaluateWindow(char c1, char c2, char c3, char c4, char piece) {
 
 int evaluateBoard(char b[ROWS][COLS], char piece) {
     int score = 0;
-    
+     
     // Center Control
     for (int r = 0; r < ROWS; r++) {
         if (b[r][COLS/2] == piece) score += 200;
@@ -175,17 +201,14 @@ int evaluateBoard(char b[ROWS][COLS], char piece) {
     }
 
     // Evaluate Windows (Horizontal, Vertical, Diagonal)
-    // Note: We perform the "isValidPlacement" check inside the loops implicitly via logic logic
-    // For cleaner code in this version, we apply the scoring to all windows
-    
     for (int r = 0; r < ROWS; r++) 
         for (int c = 0; c < COLS - 3; c++) 
             score += evaluateWindow(b[r][c], b[r][c+1], b[r][c+2], b[r][c+3], piece);
-    
+     
     for (int c = 0; c < COLS; c++) 
         for (int r = 0; r < ROWS - 3; r++) 
             score += evaluateWindow(b[r][c], b[r+1][c], b[r+2][c], b[r+3][c], piece);
-    
+     
     for (int r = 0; r < ROWS - 3; r++) { 
         for (int c = 0; c < COLS - 3; c++) 
             score += evaluateWindow(b[r][c], b[r+1][c+1], b[r+2][c+2], b[r+3][c+3], piece);
@@ -217,7 +240,7 @@ int evaluateMoveSimple(char b[ROWS][COLS], char piece) {
 vector<int> getOptimizedMoves(char b[ROWS][COLS], bool maximizingPlayer) {
     vector<pair<int, int>> moves_with_score; 
     char piece = maximizingPlayer ? 'O' : 'X';
-    
+     
     for (int col = 0; col < COLS; col++) {
         int row = getNextOpenRow(b, col);
         if (row == -1) continue;
@@ -234,10 +257,10 @@ vector<int> getOptimizedMoves(char b[ROWS][COLS], bool maximizingPlayer) {
 
         moves_with_score.push_back({col, score});
     }
-    
+     
     sort(moves_with_score.begin(), moves_with_score.end(), 
          [](auto& a, auto& b) { return a.second > b.second; });
-    
+     
     vector<int> ordered;
     for (auto& p : moves_with_score) ordered.push_back(p.first);
     return ordered;
@@ -247,10 +270,10 @@ int getAdaptiveDepth(char b[ROWS][COLS], int base_depth) {
     int threats = countThreats(b, 'O') + countThreats(b, 'X');
     if (threats >= 2) return base_depth + 2; 
     if (threats == 1) return base_depth + 1; 
-    
+     
     int moves_played = 0;
     for (int i=0; i<ROWS; i++) for(int j=0; j<COLS; j++) if(b[i][j]!=' ') moves_played++;
-    
+     
     if (moves_played < 8) return max(3, base_depth - 1); 
     if (moves_played > 30) return base_depth + 1; 
     return base_depth;
@@ -259,7 +282,7 @@ int getAdaptiveDepth(char b[ROWS][COLS], int base_depth) {
 // --- MINIMAX ALGORITHM ---
 
 pair<int, int> minimax(char b[ROWS][COLS], int depth, int alpha, int beta, bool maximizingPlayer, bool isScoreAttack, int original_depth) {
-    
+     
     string key = getBoardHash(b) + to_string(depth) + (maximizingPlayer ? "T" : "F");
     if (memo.find(key) != memo.end()) return memo[key];
 
@@ -267,7 +290,7 @@ pair<int, int> minimax(char b[ROWS][COLS], int depth, int alpha, int beta, bool 
         if (checkWin(b, 'O')) return {-1, 1000000 + depth}; 
         if (checkWin(b, 'X')) return {-1, -1000000 - depth}; 
     }
-    
+     
     int empty_cells = 0;
     for (int i=0; i<ROWS; i++) for(int j=0; j<COLS; j++) if(b[i][j]==' ') empty_cells++;
     if (empty_cells <= (original_depth * 2) && !isScoreAttack) depth = empty_cells;
@@ -325,18 +348,44 @@ pair<int, int> minimax(char b[ROWS][COLS], int depth, int alpha, int beta, bool 
 
 int calculateFinalScore(char player) {
     int score = 0;
+    // Horizontal
     for (int r = 0; r < ROWS; r++) { 
-        int streak = 0; for (int c = 0; c < COLS; c++) { if (board[r][c] == player) streak++; else { if (streak >= 4) score++; streak = 0; } } if (streak >= 4) score++;
+        int streak = 0; 
+        for (int c = 0; c < COLS; c++) { 
+            if (board[r][c] == player) streak++; 
+            else { 
+                if (streak >= 4) score += (streak - 3); 
+                streak = 0; 
+            } 
+        } 
+        if (streak >= 4) score += (streak - 3);
     }
+    // Vertical
     for (int c = 0; c < COLS; c++) {
-        int streak = 0; for (int r = 0; r < ROWS; r++) { if (board[r][c] == player) streak++; else { if (streak >= 4) score++; streak = 0; } } if (streak >= 4) score++;
+        int streak = 0; 
+        for (int r = 0; r < ROWS; r++) { 
+            if (board[r][c] == player) streak++; 
+            else { 
+                if (streak >= 4) score += (streak - 3); 
+                streak = 0; 
+            } 
+        } 
+        if (streak >= 4) score += (streak - 3);
     }
+    // Diagonal (Down-Right)
     for (int r = 0; r < ROWS - 3; r++) {
         for (int c = 0; c < COLS - 3; c++) {
-            if (board[r][c] == player && board[r+1][c+1] == player && board[r+2][c+2] == player && board[r+3][c+3] == player) { if (r>0 && c>0 && board[r-1][c-1] == player) continue; score++; }
+            if (board[r][c] == player && board[r+1][c+1] == player && board[r+2][c+2] == player && board[r+3][c+3] == player) { 
+                score++; 
+            }
         }
-        for (int c = 3; c < COLS; c++) {
-            if (board[r][c] == player && board[r+1][c-1] == player && board[r+2][c-2] == player && board[r+3][c-3] == player) { if (r>0 && c<COLS-1 && board[r-1][c+1] == player) continue; score++; }
+    }
+    // Diagonal (Up-Right)
+    for (int r = 3; r < ROWS; r++) {
+        for (int c = 0; c < COLS - 3; c++) {
+            if (board[r][c] == player && board[r-1][c+1] == player && board[r-2][c+2] == player && board[r-3][c+3] == player) { 
+                score++; 
+            }
         }
     }
     return score;
@@ -360,13 +409,15 @@ int getUserInput() {
 // --- MAIN LOOP ---
 
 int main() {
+    setupConsole(); // WINDOWS FIX APPLIED HERE
+
     initBoard();
     showRules();
 
     int gameMode, opponentMode;
     int aiDepth = 2; 
 
-    cout << "\033[2J\033[1;1H"; 
+    cout << CLEAR_SCREEN; 
     cout << "\n " << RED << "┌─────────────────────────────────────────┐" << RESET << "\n";
     cout << " " << RED << "│" << RESET << "      CONNECT 4: PROFESSIONAL EDITION    " << RED << "│" << RESET << "\n";
     cout << " " << RED << "└─────────────────────────────────────────┘" << RESET << "\n";
@@ -374,14 +425,14 @@ int main() {
     gameMode = getUserInput();
     bool isScoreAttack = (gameMode == 2);
 
-    cout << "\033[2J\033[1;1H"; 
+    cout << CLEAR_SCREEN; 
     cout << "\n  1. HUMAN VS HUMAN\n  2. HUMAN VS AI\n  Choice: ";
     opponentMode = getUserInput();
 
     bool isAI = (opponentMode == 2);
-    
+     
     if (isAI) {
-        cout << "\033[2J\033[1;1H"; 
+        cout << CLEAR_SCREEN; 
         cout << "\n  1. EASY (Depth 2)\n  2. MEDIUM (Depth 4)\n  3. HARD (Depth 6)\n  4. EXPERT (Depth 7)\n  Choice: ";
         int diff = getUserInput();
         if (diff == 1) aiDepth = 2; else if (diff == 2) aiDepth = 4; else if (diff == 3) aiDepth = 6; else aiDepth = 7; 
@@ -420,8 +471,8 @@ int main() {
             
             if (targetCol == -1) {
                 pair<int, int> result = minimax(boardCopy, adaptive_depth, 
-                                                     INT_MIN, INT_MAX, true, 
-                                                     isScoreAttack, adaptive_depth);
+                                                    INT_MIN, INT_MAX, true, 
+                                                    isScoreAttack, adaptive_depth);
                 targetCol = result.first;
             }
 
