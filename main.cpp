@@ -1,11 +1,11 @@
 /*
-    CONNECT 4: PROFESSIONAL EDITION
-    [Core Features]
-    - Algorithm: Minimax with Alpha-Beta Pruning.
-    - Heuristics: Gravity-aware evaluation, strategic pattern recognition.
-    - Optimization: Transposition table (memory cache) & dynamic move ordering.
-    - Safety: Input validation and bounded memory usage.
-    - Compatibility: Works on Linux (Native) & Windows (Auto-Color Fix).
+    CONNECT 4
+        [Core Features]
+        - Algorithm: Minimax with Alpha-Beta Pruning.
+        - Heuristics: Gravity-aware evaluation, strategic pattern recognition.
+        - Optimization: Transposition table (memory cache) & dynamic move ordering.
+        - Safety: Input validation and bounded memory usage.
+        - Compatibility: Works on Linux (Native) & Windows (Auto-Color Fix).
 */
 
 #include <iostream>
