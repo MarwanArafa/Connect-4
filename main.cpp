@@ -1,11 +1,11 @@
 /*
-    CONNECT 4
-        [Core Features]
-        - Algorithm: Minimax with Alpha-Beta Pruning.
-        - Heuristics: Gravity-aware evaluation, strategic pattern recognition.
-        - Optimization: Transposition table (memory cache) & dynamic move ordering.
-        - Safety: Input validation and bounded memory usage.
-        - Compatibility: Works on Linux (Native) & Windows (Auto-Color Fix).
+    CONNECT 4: PROFESSIONAL EDITION
+    [Core Features]
+    - Algorithm: Minimax with Alpha-Beta Pruning.
+    - Heuristics: Gravity-aware evaluation, strategic pattern recognition.
+    - Optimization: Transposition table (memory cache) & dynamic move ordering.
+    - Safety: Input validation and bounded memory usage.
+    - Compatibility: Works on Linux (Native) & Windows (Auto-Color Fix).
 */
 
 #include <iostream>
@@ -348,46 +348,70 @@ pair<int, int> minimax(char b[ROWS][COLS], int depth, int alpha, int beta, bool 
 
 int calculateFinalScore(char player) {
     int score = 0;
-    // Horizontal
-    for (int r = 0; r < ROWS; r++) { 
-        int streak = 0; 
-        for (int c = 0; c < COLS; c++) { 
-            if (board[r][c] == player) streak++; 
-            else { 
-                if (streak >= 4) score += (streak - 3); 
-                streak = 0; 
-            } 
-        } 
-        if (streak >= 4) score += (streak - 3);
+
+    // Helper to check if a coordinate is valid on the board
+    auto isValid = [&](int r, int c) { 
+        return r >= 0 && r < ROWS && c >= 0 && c < COLS; 
+    };
+
+    // 1. Horizontal
+    for (int r = 0; r < ROWS; r++) {
+        for (int c = 0; c < COLS - 3; c++) {
+            // Check for 4 pieces
+            if (board[r][c] == player && board[r][c+1] == player && 
+                board[r][c+2] == player && board[r][c+3] == player) {
+                
+                // FIX: Look behind the start (c-1). 
+                // If the piece behind is ALSO ours, this is just an extension of a previous score. Ignore it.
+                if (!isValid(r, c-1) || board[r][c-1] != player) {
+                    score++;
+                }
+            }
+        }
     }
-    // Vertical
+
+    // 2. Vertical
     for (int c = 0; c < COLS; c++) {
-        int streak = 0; 
-        for (int r = 0; r < ROWS; r++) { 
-            if (board[r][c] == player) streak++; 
-            else { 
-                if (streak >= 4) score += (streak - 3); 
-                streak = 0; 
-            } 
-        } 
-        if (streak >= 4) score += (streak - 3);
+        for (int r = 0; r < ROWS - 3; r++) {
+            if (board[r][c] == player && board[r+1][c] == player && 
+                board[r+2][c] == player && board[r+3][c] == player) {
+                
+                // FIX: Look above (r-1).
+                if (!isValid(r-1, c) || board[r-1][c] != player) {
+                    score++;
+                }
+            }
+        }
     }
-    // Diagonal (Down-Right)
+
+    // 3. Diagonal (Down-Right)
     for (int r = 0; r < ROWS - 3; r++) {
         for (int c = 0; c < COLS - 3; c++) {
-            if (board[r][c] == player && board[r+1][c+1] == player && board[r+2][c+2] == player && board[r+3][c+3] == player) { 
-                score++; 
+            if (board[r][c] == player && board[r+1][c+1] == player && 
+                board[r+2][c+2] == player && board[r+3][c+3] == player) {
+                
+                // FIX: Look top-left (r-1, c-1).
+                if (!isValid(r-1, c-1) || board[r-1][c-1] != player) {
+                    score++;
+                }
             }
         }
     }
-    // Diagonal (Up-Right)
+
+    // 4. Diagonal (Up-Right)
     for (int r = 3; r < ROWS; r++) {
         for (int c = 0; c < COLS - 3; c++) {
-            if (board[r][c] == player && board[r-1][c+1] == player && board[r-2][c+2] == player && board[r-3][c+3] == player) { 
-                score++; 
+            if (board[r][c] == player && board[r-1][c+1] == player && 
+                board[r-2][c+2] == player && board[r-3][c+3] == player) {
+                
+                // FIX: Look bottom-left (r+1, c-1).
+                if (!isValid(r+1, c-1) || board[r+1][c-1] != player) {
+                    score++;
+                }
             }
         }
     }
+
     return score;
 }
 
@@ -409,109 +433,131 @@ int getUserInput() {
 // --- MAIN LOOP ---
 
 int main() {
-    setupConsole(); // WINDOWS FIX APPLIED HERE
+    setupConsole(); // Run once at the very start
 
-    initBoard();
-    showRules();
+    // 1. THE INFINITE LOOP (Keeps the app running)
+    while (true) {
+        
+        // --- YOUR GAME LOGIC STARTS HERE ---
+        initBoard();
+        // showRules(); // Optional: Uncomment if you want rules shown every time
 
-    int gameMode, opponentMode;
-    int aiDepth = 2; 
+        int gameMode, opponentMode;
+        int aiDepth = 2; 
 
-    cout << CLEAR_SCREEN; 
-    cout << "\n " << RED << "┌─────────────────────────────────────────┐" << RESET << "\n";
-    cout << " " << RED << "│" << RESET << "      CONNECT 4: PROFESSIONAL EDITION    " << RED << "│" << RESET << "\n";
-    cout << " " << RED << "└─────────────────────────────────────────┘" << RESET << "\n";
-    cout << "  1. CLASSIC MODE\n  2. SCORE ATTACK\n  Choice: ";
-    gameMode = getUserInput();
-    bool isScoreAttack = (gameMode == 2);
-
-    cout << CLEAR_SCREEN; 
-    cout << "\n  1. HUMAN VS HUMAN\n  2. HUMAN VS AI\n  Choice: ";
-    opponentMode = getUserInput();
-
-    bool isAI = (opponentMode == 2);
-     
-    if (isAI) {
         cout << CLEAR_SCREEN; 
-        cout << "\n  1. EASY (Depth 2)\n  2. MEDIUM (Depth 4)\n  3. HARD (Depth 6)\n  4. EXPERT (Depth 7)\n  Choice: ";
-        int diff = getUserInput();
-        if (diff == 1) aiDepth = 2; else if (diff == 2) aiDepth = 4; else if (diff == 3) aiDepth = 6; else aiDepth = 7; 
-    }
+        cout << "\n " << RED << "┌─────────────────────────────────────────┐" << RESET << "\n";
+        cout << " " << RED << "│" << RESET << "     CONNECT 4: PROFESSIONAL EDITION     " << RED << "│" << RESET << "\n";
+        cout << " " << RED << "└─────────────────────────────────────────┘" << RESET << "\n";
+        cout << "  1. CLASSIC MODE\n  2. SCORE ATTACK\n  Choice: ";
+        gameMode = getUserInput();
+        bool isScoreAttack = (gameMode == 2);
 
-    string modeTitle = (gameMode == 1) ? "CLASSIC MODE" : "SCORE ATTACK";
-    int maxMoves = ROWS * COLS;
-    int moves = 0;
-    char current = 'X';
-    bool gameOver = false;
-    int s1 = 0, s2 = 0;
+        cout << CLEAR_SCREEN; 
+        cout << "\n  1. HUMAN VS HUMAN\n  2. HUMAN VS AI\n  Choice: ";
+        opponentMode = getUserInput();
 
-    while (!gameOver && moves < maxMoves) {
-        if (gameMode == 2) { s1 = calculateFinalScore('X'); s2 = calculateFinalScore('O'); }
-        printBoard(s1, s2, modeTitle);
+        bool isAI = (opponentMode == 2);
+        
+        if (isAI) {
+            cout << CLEAR_SCREEN; 
+            cout << "\n  1. EASY (Depth 2)\n  2. MEDIUM (Depth 4)\n  3. HARD (Depth 6)\n  4. EXPERT (Depth 7)\n  Choice: ";
+            int diff = getUserInput();
+            if (diff == 1) aiDepth = 2; else if (diff == 2) aiDepth = 4; else if (diff == 3) aiDepth = 6; else aiDepth = 7; 
+        }
 
-        int targetCol = -1;
+        string modeTitle = (gameMode == 1) ? "CLASSIC MODE" : "SCORE ATTACK";
+        int maxMoves = ROWS * COLS;
+        int moves = 0;
+        char current = 'X';
+        bool gameOver = false;
+        int s1 = 0, s2 = 0;
 
-        if (isAI && current == 'O') {
-            cout << " AI is thinking (Depth " << aiDepth << ")..." << endl;
-            
-            int adaptive_depth = getAdaptiveDepth(board, aiDepth);
-            char boardCopy[ROWS][COLS];
-            for(int i=0; i<ROWS; i++) for(int j=0; j<COLS; j++) boardCopy[i][j] = board[i][j];
-            
-            for (int col = 0; col < COLS; col++) {
-                int row = getNextOpenRow(boardCopy, col);
-                if (row == -1) continue;
-                boardCopy[row][col] = 'O';
-                if (checkWin(boardCopy, 'O') && !isScoreAttack) { targetCol = col; break; }
-                boardCopy[row][col] = ' ';
-                boardCopy[row][col] = 'X';
-                if (checkWin(boardCopy, 'X') && !isScoreAttack) { targetCol = col; break; }
-                boardCopy[row][col] = ' ';
-            }
-            
-            if (targetCol == -1) {
-                pair<int, int> result = minimax(boardCopy, adaptive_depth, 
+        while (!gameOver && moves < maxMoves) {
+            if (gameMode == 2) { s1 = calculateFinalScore('X'); s2 = calculateFinalScore('O'); }
+            printBoard(s1, s2, modeTitle);
+
+            int targetCol = -1;
+
+            if (isAI && current == 'O') {
+                cout << " AI is thinking (Depth " << aiDepth << ")..." << endl;
+                
+                int adaptive_depth = getAdaptiveDepth(board, aiDepth);
+                char boardCopy[ROWS][COLS];
+                for(int i=0; i<ROWS; i++) for(int j=0; j<COLS; j++) boardCopy[i][j] = board[i][j];
+                
+                for (int col = 0; col < COLS; col++) {
+                    int row = getNextOpenRow(boardCopy, col);
+                    if (row == -1) continue;
+                    boardCopy[row][col] = 'O';
+                    if (checkWin(boardCopy, 'O') && !isScoreAttack) { targetCol = col; break; }
+                    boardCopy[row][col] = ' ';
+                    boardCopy[row][col] = 'X';
+                    if (checkWin(boardCopy, 'X') && !isScoreAttack) { targetCol = col; break; }
+                    boardCopy[row][col] = ' ';
+                }
+                
+                if (targetCol == -1) {
+                    pair<int, int> result = minimax(boardCopy, adaptive_depth, 
                                                     INT_MIN, INT_MAX, true, 
                                                     isScoreAttack, adaptive_depth);
-                targetCol = result.first;
-            }
-
-            if (targetCol == -1) {
-                for(int k=0; k<COLS; k++) if(getNextOpenRow(board, k) != -1) { targetCol = k; break; }
-            }
-
-        } else {
-            cout << " Player " << (current == 'X' ? RED : BLUE) << current << RESET << ", choose column (1-7): ";
-            int input = getUserInput();
-            targetCol = input - 1; 
-        }
-
-        if (dropPiece(targetCol, current)) {
-            moves++;
-            if (gameMode == 1) { 
-                if (checkWin(board, current)) {
-                    if (current == 'X') s1 = 1; else s2 = 1;
-                    printBoard(s1, s2, modeTitle);
-                    if (current == 'O') cout << "\n 🤖 " << BLUE << "AI WINS!" << RESET << " 🤖\n";
-                    else cout << "\n 🏆 " << RED << "PLAYER X WINS!" << RESET << " 🏆\n";
-                    gameOver = true;
+                    targetCol = result.first;
                 }
-            }
-            if (!gameOver) current = (current == 'X') ? 'O' : 'X';
-        } else {
-            if (current == 'X') { cout << "Invalid move. Try again.\n"; }
-        }
-    }
 
-    if (gameMode == 2) {
-        s1 = calculateFinalScore('X'); s2 = calculateFinalScore('O');
-        printBoard(s1, s2, modeTitle);
-        cout << "\n FINAL SCORE: X=" << s1 << " | O=" << s2 << endl;
-        if (s1 > s2) cout << " 🏆 PLAYER X WINS! 🏆\n";
-        else if (s2 > s1) cout << " 🤖 AI WINS! 🤖" << endl;
-        else cout << " 🤝 DRAW! 🤝\n";
-    } else if (moves >= maxMoves && !gameOver) {
-        cout << " 🤝 DRAW! Board is full.\n";
+                if (targetCol == -1) {
+                    for(int k=0; k<COLS; k++) if(getNextOpenRow(board, k) != -1) { targetCol = k; break; }
+                }
+
+            } else {
+                cout << " Player " << (current == 'X' ? RED : BLUE) << current << RESET << ", choose column (1-7): ";
+                int input = getUserInput();
+                targetCol = input - 1; 
+            }
+
+            if (dropPiece(targetCol, current)) {
+                moves++;
+                if (gameMode == 1) { 
+                    if (checkWin(board, current)) {
+                        if (current == 'X') s1 = 1; else s2 = 1;
+                        printBoard(s1, s2, modeTitle);
+                        if (current == 'O') cout << "\n 🤖 " << BLUE << "AI WINS!" << RESET << " 🤖\n";
+                        else cout << "\n 🏆 " << RED << "PLAYER X WINS!" << RESET << " 🏆\n";
+                        gameOver = true;
+                    }
+                }
+                if (!gameOver) current = (current == 'X') ? 'O' : 'X';
+            } else {
+                if (current == 'X') { cout << "Invalid move. Try again.\n"; }
+            }
+        }
+
+        if (gameMode == 2) {
+            s1 = calculateFinalScore('X'); s2 = calculateFinalScore('O');
+            printBoard(s1, s2, modeTitle);
+            cout << "\n FINAL SCORE: X=" << s1 << " | O=" << s2 << endl;
+            if (s1 > s2) cout << " 🏆 PLAYER X WINS! 🏆\n";
+            else if (s2 > s1) cout << " 🤖 AI WINS! 🤖" << endl;
+            else cout << " 🤝 DRAW! 🤝\n";
+        } else if (moves >= maxMoves && !gameOver) {
+            cout << " 🤝 DRAW! Board is full.\n";
+        }
+        // --- END OF YOUR GAME LOGIC ---
+
+
+        // 2. THE RESTART LOGIC (Prevents closing)
+        cout << "\n─────────────────────────────────────────";
+        cout << "\n Press [ENTER] to close, or type ANY letter to play again: ";
+        
+        string restartInput;
+        getline(cin, restartInput); 
+
+        // If user presses ENTER (empty), break loop and close.
+        if (restartInput.empty()) {
+            break; 
+        }
+        
+        // Clear AI memory so the next game starts fresh
+        memo.clear();
     }
 
     return 0;
