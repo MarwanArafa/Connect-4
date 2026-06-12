@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="https://raw.githubusercontent.com/MarwanArafa/connect4-ai/main/preview.png" alt="Connect 4 AI Game Board Preview" width="100%">
+</div>
+
 # 🏛️ Connect 4: Advanced AI Edition (C++)
 
 > **Status:** Completed | **Type:** Game AI Engine | **Language:** C++
